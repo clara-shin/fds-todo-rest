@@ -1,7 +1,9 @@
+const API_URL = 'http://localhost:3000';
+
 const todoListEl = document.querySelector('.todo-list');
 const inputEl = document.querySelector('.input-group__input');
 const addButtonEl = document.querySelector('.input-group__add-button');
-const API_URL = 'http://localhost:3000';
+
 
 let count = 0;
 let todos = [
@@ -9,7 +11,7 @@ let todos = [
     title: 'React 공부',
     complete: false
   }
-]
+] // 이것을 제이슨서버로 데이터를 만들고 업뎃하고 지우고 해볼거야
 
 // 할 일 추가 (엔터키를 눌렀을 때)
 inputEl.addEventListener('keypress', async e => {
@@ -28,32 +30,58 @@ addButtonEl.addEventListener('click', async e => {
   refreshTodoList();
 });
 
+//추가
 async function addTodo(title) {
   todos.push({
     id: count++,
     title,
     complete: false
   });
-}
-
-async function removeTodo(todoId) {
-  todos = todos.filter(t => t.id !== todoId);
-}
-
-async function updateTodo(todoId, complete) {
-  for (let todo of todos) {
-    if (todo.id === todoId) {
-      todo.complete = complete;
+  //return 1;
+  //return Promise.resolve(1); .then()콜백과 동일하게 작동함
+  return fetch(`${API_URL}/todos`, {
+    method: "post",
+    body: JSON.stringify({
+      title, //title: title
+      complete: false
+    }),
+    headers: {
+      'Content-Type': 'application/json'
     }
-  }
+  });
+}
+
+//삭제
+async function removeTodo(todoId) { //todoId: todos의 식별자
+  todos = todos.filter(t => t.id !== todoId);
+  return fetch(`${API_URL}/todos/${todoId}`,{
+    method: 'delete'
+  });
+}
+
+//수정
+async function updateTodo(todoId, complete) {
+  return fetch(`${API_URL}/todos/${todoId}`,{
+    method: 'PATCH',
+    body: JSON.stringify({
+      "complete":complete
+    }),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
 }
 
 async function refreshTodoList() {
+  //REST API에서 할 일 목록 가져오기
+  const res = await fetch(`${API_URL}/todos`);
+  const todos = await res.json();
+
   // 현재 화면의 할 일 목록 삭제
   todoListEl.innerHTML = '';
 
   // 할 일 목록 새로 표시하기
-  for (let {id, title, complete} of todos) {
+  for (let {id, title, complete} of todos) { //restAPI에서 받아온 값에서 순회함
     const todoEl = document.createElement('div');
     todoEl.classList.add('todo-list__item');
 
